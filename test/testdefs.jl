@@ -5,6 +5,7 @@ using Test, Random
 function runtests(name, path, isolate=true; seed=nothing)
     old_print_setting = Test.TESTSET_PRINT_ENABLE[]
     Test.TESTSET_PRINT_ENABLE[] = false
+    old_stdin = stdin
     try
         if isolate
             # Simple enough to type and random enough so that no one will hard
@@ -18,6 +19,8 @@ function runtests(name, path, isolate=true; seed=nothing)
         let id = myid()
             wait(@spawnat 1 print_testworker_started(name, id))
         end
+        # hack to workaround Pkg#2961
+        startswith(name, "Pkg") && stdin isa Base.DevNull && (println("applied Pkg#2961 bug workaround"); Base._redirect_io_global(Base.BufferStream(), 0))
         res_and_time_data = @timed @testset "$name" begin
             # Random.seed!(nothing) will fail
             seed != nothing && Random.seed!(seed)
@@ -36,6 +39,7 @@ function runtests(name, path, isolate=true; seed=nothing)
                              rss)
         return res_and_time_data
     catch ex
+        startswith(name, "Pkg") && Base._redirect_io_global(old_stdin, 0)
         Test.TESTSET_PRINT_ENABLE[] = old_print_setting
         ex isa TestSetException || rethrow()
         return Any[ex]
