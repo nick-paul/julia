@@ -399,6 +399,7 @@
     XX(jl_restore_excstack) \
     XX(jl_restore_incremental) \
     XX(jl_restore_incremental_from_buf) \
+    XX(jl_restore_package_image_from_file) \
     XX(jl_restore_system_image) \
     XX(jl_restore_system_image_data) \
     XX(jl_rethrow) \
@@ -514,6 +515,7 @@
     XX(jl_vexceptionf) \
     XX(jl_vprintf) \
     XX(jl_wakeup_thread) \
+    XX(jl_write_compiler_output) \
     XX(jl_yield) \
 
 #define JL_RUNTIME_EXPORTED_FUNCS_WIN(XX) \
@@ -532,6 +534,7 @@
     YY(jl_get_LLVM_VERSION) \
     YY(jl_dump_native) \
     YY(jl_get_llvm_gv) \
+    YY(jl_iterate_llvm_gv) \
     YY(jl_dump_function_asm) \
     YY(jl_LLVMCreateDisasm) \
     YY(jl_LLVMDisasmInstruction) \

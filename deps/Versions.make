@@ -48,6 +48,12 @@ LLVM_VER := 13.0.1
 LLVM_ASSERT_JLL_VER := 13.0.1+0
 LLVM_JLL_NAME := libLLVM
 
+# LLVM
+LLD_VER := 13.0.1
+LLD_ASSERT_JLL_VER := 13.0.1+0
+LLD_JLL_NAME := LLD
+LLD_JLL_DOWNLOAD_NAME := LLVM
+
 # LLVM_tools (downloads LLVM_jll to get things like `lit` and `opt`)
 LLVM_TOOLS_JLL_NAME := LLVM
 LLVM_TOOLS_JLL_VER := 13.0.1+0

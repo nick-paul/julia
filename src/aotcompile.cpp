@@ -113,6 +113,17 @@ int32_t jl_get_llvm_gv_impl(void *native_code, jl_value_t *p)
 }
 
 extern "C" JL_DLLEXPORT
+void jl_iterate_llvm_gv_impl(void *native_code, void (*callback)(void*, int32_t, void*), void* ctx)
+{
+    jl_native_code_desc_t *data = (jl_native_code_desc_t*)native_code;
+    if (data) {
+        for (std::pair<void*, int32_t> pair : data->jl_value_to_llvm) {
+            callback(ctx, pair.second, pair.first);
+        }
+    }
+}
+
+extern "C" JL_DLLEXPORT
 Module* jl_get_llvm_module_impl(void *native_code)
 {
     jl_native_code_desc_t *data = (jl_native_code_desc_t*)native_code;
@@ -147,7 +158,6 @@ static void emit_offset_table(Module &mod, const std::vector<GlobalValue*> &vars
 {
     // Emit a global variable with all the variable addresses.
     // The cloning pass will convert them into offsets.
-    assert(!vars.empty());
     size_t nvars = vars.size();
     std::vector<Constant*> addrs(nvars);
     for (size_t i = 0; i < nvars; i++) {
@@ -254,9 +264,9 @@ static void jl_ci_cache_lookup(const jl_cgparams_t &cgparams, jl_method_instance
 // this builds the object file portion of the sysimage files for fast startup, and can
 // also be used be extern consumers like GPUCompiler.jl to obtain a module containing
 // all reachable & inferrrable functions. The `policy` flag switches between the default
-// mode `0`, the extern mode `1`, and imaging mode `2`.
+// mode `0`, the extern mode `1`.
 extern "C" JL_DLLEXPORT
-void *jl_create_native_impl(jl_array_t *methods, LLVMContextRef llvmctxt, const jl_cgparams_t *cgparams, int _policy)
+void *jl_create_native_impl(jl_array_t *methods, LLVMContextRef llvmctxt, const jl_cgparams_t *cgparams, int _policy, int _imaging_mode)
 {
     if (cgparams == NULL)
         cgparams = &jl_default_cgparams;
@@ -275,7 +285,7 @@ void *jl_create_native_impl(jl_array_t *methods, LLVMContextRef llvmctxt, const 
         compiler_start_time = jl_hrtime();
 
     CompilationPolicy policy = (CompilationPolicy) _policy;
-    if (policy == CompilationPolicy::ImagingMode)
+    if (_imaging_mode)
         imaging_mode = 1;
     std::unique_ptr<Module> clone(jl_create_llvm_module("text", ctxt));
 
@@ -401,7 +411,7 @@ void *jl_create_native_impl(jl_array_t *methods, LLVMContextRef llvmctxt, const 
     data->M = std::move(clone);
     if (measure_compile_time_enabled)
         jl_atomic_fetch_add_relaxed(&jl_cumulative_compile_time, (jl_hrtime() - compiler_start_time));
-    if (policy == CompilationPolicy::ImagingMode)
+    if (_imaging_mode)
         imaging_mode = 0;
     JL_UNLOCK(&jl_codegen_lock); // Might GC
     return (void*)data;
@@ -518,7 +528,7 @@ void jl_dump_native_impl(void *native_code,
     Type *T_psize = T_size->getPointerTo();
 
     // add metadata information
-    if (imaging_mode) {
+    if (imaging_mode || jl_options.outputo) {
         emit_offset_table(*data->M, data->jl_sysimg_gvars, "jl_sysimg_gvars", T_psize);
         emit_offset_table(*data->M, data->jl_sysimg_fvars, "jl_sysimg_fvars", T_psize);
 

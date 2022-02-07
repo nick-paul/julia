@@ -301,14 +301,22 @@ static inline std::vector<T*> consume_gv(Module &M, const char *name)
     // Strip them from the Module so that it's easier to handle the uses.
     GlobalVariable *gv = M.getGlobalVariable(name);
     assert(gv && gv->hasInitializer());
-    auto *ary = cast<ConstantArray>(gv->getInitializer());
-    unsigned nele = ary->getNumOperands();
+    ArrayType *Ty = cast<ArrayType>(gv->getInitializer()->getType());
+    unsigned nele = Ty->getArrayNumElements();
     std::vector<T*> res(nele);
-    for (unsigned i = 0; i < nele; i++)
-        res[i] = cast<T>(ary->getOperand(i)->stripPointerCasts());
+    ConstantArray *ary = nullptr;
+    if (gv->getInitializer()->isNullValue()) {
+        for (unsigned i = 0; i < nele; ++i)
+            res[i] = cast<T>(Constant::getNullValue(Ty->getArrayElementType()));
+    }
+    else {
+        ary = cast<ConstantArray>(gv->getInitializer());
+        for (unsigned i = 0; i < nele; ++i)
+            res[i] = cast<T>(ary->getOperand(i)->stripPointerCasts());
+    }
     assert(gv->use_empty());
     gv->eraseFromParent();
-    if (ary->use_empty())
+    if (ary && ary->use_empty())
         ary->destroyConstant();
     return res;
 }
@@ -906,12 +914,17 @@ Constant *CloneCtx::emit_offset_table(const std::vector<T*> &vars, StringRef nam
 {
     auto T_int32 = Type::getInt32Ty(M.getContext());
     auto T_size = getSizeTy(M.getContext());
-    assert(!vars.empty());
-    add_comdat(GlobalAlias::create(T_size, 0, GlobalVariable::ExternalLinkage,
-                                   name + "_base",
-                                   ConstantExpr::getBitCast(vars[0], T_size->getPointerTo()), &M));
-    auto vbase = ConstantExpr::getPtrToInt(vars[0], T_size);
     uint32_t nvars = vars.size();
+    Constant *base = nullptr;
+    if (nvars > 0) {
+        base = ConstantExpr::getBitCast(vars[0], T_size->getPointerTo());
+        add_comdat(GlobalAlias::create(T_size, 0, GlobalVariable::ExternalLinkage,
+                                       name + "_base",
+                                       base, &M));
+    } else {
+        base = ConstantExpr::getNullValue(T_size->getPointerTo());
+    }
+    auto vbase = ConstantExpr::getPtrToInt(base, T_size);
     std::vector<Constant*> offsets(nvars + 1);
     offsets[0] = ConstantInt::get(T_int32, nvars);
     offsets[1] = ConstantInt::get(T_int32, 0);
