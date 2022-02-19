@@ -30,6 +30,7 @@ Build system changes
 New library functions
 ---------------------
 
+* `graphemes(s, m, n)` in `Unicode` returns a substring of the `m`-th to `n`-th graphemes in `s` ([#44266]).
 
 New library features
 --------------------
