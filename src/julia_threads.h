@@ -217,6 +217,8 @@ struct _jl_tls_states_t {
     // Temporary backtrace buffer. Scanned for gc roots when bt_size > 0.
     struct _jl_bt_element_t *bt_data; // JL_MAX_BT_SIZE + 1 elements long
     size_t bt_size;    // Size for backtrace in transit in bt_data
+    // Temporary backtrace buffer used only for allocations profiler.
+    struct _jl_bt_element_t *profiling_bt_buffer;
     // Atomically set by the sender, reset by the handler.
     volatile sig_atomic_t signal_request;
     // Allow the sigint to be raised asynchronously
