@@ -1147,6 +1147,7 @@ extern void *jl_ntdll_handle;
 extern void *jl_kernel32_handle;
 extern void *jl_crtdll_handle;
 extern void *jl_winsock_handle;
+void win32_formatmessage(DWORD code, char *reason, int len) JL_NOTSAFEPOINT;
 #endif
 
 JL_DLLEXPORT void *jl_get_library_(const char *f_lib, int throw_err);

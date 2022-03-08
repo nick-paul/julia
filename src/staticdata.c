@@ -2473,9 +2473,18 @@ JL_DLLEXPORT jl_value_t *jl_restore_system_image_data(const char *buf, size_t le
 
 JL_DLLEXPORT jl_value_t *jl_restore_package_image_from_file(const char *fname)
 {
-    void *pkgimg_handle = dlopen(fname, RTLD_LAZY);
-    if (!pkgimg_handle)
-        jl_errorf("Error opening package file %s: %s\n", fname, dlerror());
+    void *pkgimg_handle = jl_dlopen(fname, JL_RTLD_LAZY);
+    if (!pkgimg_handle) {
+#ifdef _OS_WINDOWS_
+        int err;
+        char reason[256];
+        err = GetLastError();
+        win32_formatmessage(err, reason, sizeof(reason));
+#else
+        const char *reason = dlerror();
+#endif
+        jl_errorf("Error opening package file %s: %s\n", fname, reason);
+    }
     const char *pkgimg_data;
     jl_dlsym(pkgimg_handle, "jl_system_image_data", (void **)&pkgimg_data, 1);
     size_t *plen;
