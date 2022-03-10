@@ -8,6 +8,7 @@
 #include "llvm/Analysis/LoopIterator.h"
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Transforms/Utils/LoopUtils.h>
 #include <llvm/Analysis/ValueTracking.h>
 
@@ -172,6 +173,7 @@ struct JuliaLICM : public JuliaPassContext {
                 }
             }
         }
+        assert(!verifyFunction(*L->getBlocks()[0]->getParent()));
         return changed;
     }
 };

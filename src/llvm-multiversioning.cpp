@@ -24,6 +24,7 @@
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 
 #include "julia.h"
@@ -1105,6 +1106,7 @@ static bool runMultiVersioning(Module &M, function_ref<LoopInfo&(Function&)> Get
     // and collected all the shared/target-specific relocations.
     clone.emit_metadata();
 
+    assert(!verifyModule(M));
     return true;
 }
 

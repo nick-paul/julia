@@ -25,6 +25,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Metadata.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Support/Debug.h>
 
 #include "julia_assert.h"
@@ -205,6 +206,7 @@ static bool markLoopInfo(Module &M, Function *marker, function_ref<LoopInfo &(Fu
         I->deleteValue();
     marker->eraseFromParent();
 
+    assert(!verifyModule(M));
     return Changed;
 }
 

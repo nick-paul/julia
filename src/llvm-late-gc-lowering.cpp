@@ -2697,6 +2697,7 @@ bool LateLowerGCFrame::runOnFunction(Function &F, bool *CFGModified) {
     std::map<Value *, std::pair<int, int>> CallFrames; // = OptimizeCallFrames(S, Ordering);
     PlaceRootsAndUpdateCalls(Colors, S, CallFrames);
     CleanupIR(F, &S, CFGModified);
+    assert(!verifyFunction(F));
     return true;
 }
 

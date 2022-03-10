@@ -34,6 +34,7 @@
 #include <llvm/Transforms/Utils/SimplifyCFGOptions.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/PassPlugin.h>
+#include <llvm/Passes/StandardInstrumentations.h>
 #if defined(USE_POLLY)
 #include <polly/RegisterPasses.h>
 #include <polly/LinkAllPasses.h>
@@ -1216,7 +1217,10 @@ void addPipeline(ModulePassManager &MPM, int opt_level, bool lower_intrinsics, b
 void optimizeModule(Module &M, TargetMachine *TM, int opt_level, bool lower_intrinsics, bool dump_native)
 {
     // llvm::PassBuilder pb(targetMachine->LLVM, llvm::PipelineTuningOptions(), llvm::None, &passInstrumentationCallbacks);
-    PassBuilder PB;
+    PassInstrumentationCallbacks PIC;
+    StandardInstrumentations SI(false);
+    SI.registerCallbacks(PIC);
+    PassBuilder PB(TM, PipelineTuningOptions(), None, &PIC);
     // Create the analysis managers.
     LoopAnalysisManager LAM;
     PB.registerLoopAnalyses(LAM);

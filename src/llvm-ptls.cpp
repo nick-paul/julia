@@ -20,6 +20,7 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/MDBuilder.h>
+#include <llvm/IR/Verifier.h>
 
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
@@ -281,6 +282,7 @@ bool LowerPTLS::runOnModule(Module &_M, bool *CFGModified)
     }
     assert(pgcstack_getter->use_empty());
     pgcstack_getter->eraseFromParent();
+    assert(!verifyModule(_M));
     return true;
 }
 

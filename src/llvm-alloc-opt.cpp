@@ -20,6 +20,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Operator.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Pass.h>
 #include <llvm/Support/Debug.h>
 #include <llvm/Transforms/Utils/PromoteMemToReg.h>
@@ -1148,7 +1149,9 @@ bool AllocOpt::runOnFunction(Function &F, function_ref<DominatorTree&()> GetDT)
     Optimizer optimizer(F, *this, std::move(GetDT));
     optimizer.initialize();
     optimizer.optimizeAll();
-    return optimizer.finalize();
+    auto changed = optimizer.finalize();
+    assert(!verifyFunction(F));
+    return changed;
 }
 
 struct AllocOptLegacy : public FunctionPass {

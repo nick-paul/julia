@@ -21,6 +21,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Support/Debug.h>
 
@@ -104,6 +105,7 @@ bool lowerCPUFeatures(Module &M)
         for (auto I: Materialized) {
             I->eraseFromParent();
         }
+        assert(!verifyModule(M));
         return true;
     } else {
         return false;

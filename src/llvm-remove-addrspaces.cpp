@@ -8,6 +8,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Support/Debug.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
@@ -452,6 +453,7 @@ bool removeAddrspaces(Module &M, AddrspaceRemapFunction ASRemapper)
         }
     }
 
+    assert(!verifyModule(M));
     return true;
 }
 

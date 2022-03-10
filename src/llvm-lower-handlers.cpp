@@ -16,6 +16,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Value.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Pass.h>
 #include <llvm/Support/Debug.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
@@ -215,6 +216,7 @@ static bool lowerExcHandlers(Function &F) {
             LifetimeEnd->insertAfter(it.first);
         }
     }
+    assert(!verifyFunction(F));
     return true;
 }
 

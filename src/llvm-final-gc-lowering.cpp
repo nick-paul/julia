@@ -8,6 +8,7 @@
 #include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Pass.h>
 #include <llvm/Support/Debug.h>
 #include <llvm/Transforms/Utils/ModuleUtils.h>
@@ -211,6 +212,7 @@ bool FinalLowerGC::doInitialization(Module &M) {
     }
     if (j != 0)
         appendToCompilerUsed(M, ArrayRef<GlobalValue*>(functionList, j));
+    assert(!verifyModule(M));
     return true;
 }
 
@@ -244,6 +246,7 @@ bool FinalLowerGC::doFinalization(Module &M)
     used = new GlobalVariable(M, ATy, false, GlobalValue::AppendingLinkage,
                                     ConstantArray::get(ATy, init), "llvm.compiler.used");
     used->setSection("llvm.metadata");
+    assert(!verifyModule(M));
     return true;
 }
 
@@ -319,6 +322,8 @@ bool FinalLowerGC::runOnFunction(Function &F)
             }
         }
     }
+
+    assert(!verifyFunction(F));
 
     return true;
 }

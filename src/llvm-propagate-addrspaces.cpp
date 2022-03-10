@@ -295,6 +295,7 @@ bool propagateJuliaAddrspaces(Function &F) {
     visitor.ToDelete.clear();
     visitor.LiftingMap.clear();
     visitor.Visited.clear();
+    assert(!verifyFunction(F));
     return true;
 }
 

@@ -17,6 +17,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Operator.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Pass.h>
 #include <llvm/Support/Debug.h>
 
@@ -80,6 +81,7 @@ static bool combineMulAdd(Function &F)
             }
         }
     }
+    assert(!verifyFunction(F));
     return true;
 }
 
