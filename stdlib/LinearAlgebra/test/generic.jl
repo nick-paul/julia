@@ -388,8 +388,6 @@ Base.:-(a::ModInt{n}, b::ModInt{n}) where {n} = ModInt{n}(a.k - b.k)
 Base.:*(a::ModInt{n}, b::ModInt{n}) where {n} = ModInt{n}(a.k * b.k)
 Base.:-(a::ModInt{n}) where {n} = ModInt{n}(-a.k)
 Base.inv(a::ModInt{n}) where {n} = ModInt{n}(invmod(a.k, n))
-Base.:/(a::ModInt{n}, b::ModInt{n}) where {n} = a*inv(b)
-Base.:\(a::ModInt{n}, b::ModInt{n}) where {n} = inv(a)*b
 
 Base.zero(::Type{ModInt{n}}) where {n} = ModInt{n}(0)
 Base.zero(::ModInt{n}) where {n} = ModInt{n}(0)
