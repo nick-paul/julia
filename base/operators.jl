@@ -527,6 +527,7 @@ identity(x) = x
 
 +(x) = x
 -(x) = (-1)*x
+-(x, y) = x + (-y)
 *(x) = x
 (&)(x::Integer) = x
 (|)(x::Integer) = x
@@ -627,7 +628,9 @@ julia> inv(A) * x
  -7.0
 ```
 """
-\(x::Number, y::Number) = inv(x) * y
+\(x, y) = inv(x) * y
+
+/(x, y) = x * inv(y)
 
 # Core <<, >>, and >>> take either Int or UInt as second arg. Signed shift
 # counts can shift in either direction, and are translated here to unsigned
