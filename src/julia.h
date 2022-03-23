@@ -460,6 +460,7 @@ typedef struct {
     // `wrapper` is either the only instantiation of the type (if no parameters)
     // or a UnionAll accepting parameters to make an instantiation.
     jl_value_t *wrapper;
+    jl_value_t *Typeofwrapper;
     _Atomic(jl_svec_t*) cache;        // sorted array
     _Atomic(jl_svec_t*) linearcache;  // unsorted array
     struct _jl_methtable_t *mt;

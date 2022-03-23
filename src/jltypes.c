@@ -715,16 +715,33 @@ static ssize_t lookup_type_idx_linearvalue(jl_svec_t *cache, jl_value_t *key1, j
 static jl_value_t *lookup_type(jl_typename_t *tn JL_PROPAGATES_ROOT, jl_value_t **key, size_t n)
 {
     JL_TIMING(TYPE_CACHE_LOOKUP);
+    jl_value_t *result;
+    int cacheableType = 0;
+    if (tn == jl_type_typename) {
+        assert(n == 1);
+        jl_value_t *uw = jl_unwrap_unionall(key[0]);
+        if (jl_is_datatype(uw) && key[0] == ((jl_datatype_t*)uw)->name->wrapper) {
+            if (((jl_datatype_t*)uw)->name->Typeofwrapper)
+                return ((jl_datatype_t*)uw)->name->Typeofwrapper;
+            cacheableType = 1;
+        }
+    }
     unsigned hv = typekey_hash(tn, key, n, 0);
     if (hv) {
         jl_svec_t *cache = jl_atomic_load_relaxed(&tn->cache);
-        return (jl_value_t*)lookup_type_set(cache, key, n, hv);
+        result = (jl_value_t*)lookup_type_set(cache, key, n, hv);
     }
     else {
         jl_svec_t *linearcache = jl_atomic_load_relaxed(&tn->linearcache);
         ssize_t idx = lookup_type_idx_linear(linearcache, key, n);
-        return (idx < 0) ? NULL : jl_svecref(linearcache, idx);
+        result = (idx < 0) ? NULL : jl_svecref(linearcache, idx);
     }
+    if (cacheableType && result) {
+        jl_typename_t *tn2 = ((jl_datatype_t*)jl_unwrap_unionall(key[0]))->name;
+        tn2->Typeofwrapper = result;
+        jl_gc_wb(tn2, result);
+    }
+    return result;
 }
 
 static jl_value_t *lookup_typevalue(jl_typename_t *tn, jl_value_t *key1, jl_value_t **key, size_t n, int leaf)
@@ -2025,22 +2042,22 @@ void jl_init_types(void) JL_GC_DISABLED
     jl_typename_type->name->mt = jl_nonfunction_mt;
     jl_typename_type->super = jl_any_type;
     jl_typename_type->parameters = jl_emptysvec;
-    jl_typename_type->name->n_uninitialized = 14 - 2;
-    jl_typename_type->name->names = jl_perm_symsvec(14, "name", "module",
+    jl_typename_type->name->n_uninitialized = 15 - 2;
+    jl_typename_type->name->names = jl_perm_symsvec(15, "name", "module",
                                                     "names", "atomicfields", "constfields",
-                                                    "wrapper", "cache", "linearcache",
+                                                    "wrapper", "Typeofwrapper", "cache", "linearcache",
                                                     "mt", "partial",
                                                     "hash", "n_uninitialized",
                                                     "flags", // "abstract", "mutable", "mayinlinealloc",
                                                     "max_methods");
-    jl_typename_type->types = jl_svec(14, jl_symbol_type, jl_any_type /*jl_module_type*/,
+    jl_typename_type->types = jl_svec(15, jl_symbol_type, jl_any_type /*jl_module_type*/,
                                       jl_simplevector_type, jl_any_type/*jl_voidpointer_type*/, jl_any_type/*jl_voidpointer_type*/,
-                                      jl_type_type, jl_simplevector_type, jl_simplevector_type,
+                                      jl_type_type, jl_type_type, jl_simplevector_type, jl_simplevector_type,
                                       jl_methtable_type, jl_any_type,
                                       jl_any_type /*jl_long_type*/, jl_any_type /*jl_int32_type*/,
                                       jl_any_type /*jl_uint8_type*/,
                                       jl_any_type /*jl_uint8_type*/);
-    const static uint32_t typename_constfields[1] = { 0x00001d3f }; // (1<<0)|(1<<1)|(1<<2)|(1<<3)|(1<<4)|(1<<5)|(1<<8)|(1<<10)|(1<<11)|(1<<12)
+    const static uint32_t typename_constfields[1] = { 0x00003a3f }; // (1<<0)|(1<<1)|(1<<2)|(1<<3)|(1<<4)|(1<<5)|(1<<9)|(1<<11)|(1<<12)|(1<<13)
     jl_typename_type->name->constfields = typename_constfields;
     jl_precompute_memoized_dt(jl_typename_type, 1);
 
@@ -2672,10 +2689,11 @@ void jl_init_types(void) JL_GC_DISABLED
     jl_svecset(jl_typename_type->types, 3, jl_voidpointer_type);
     jl_svecset(jl_typename_type->types, 4, jl_voidpointer_type);
     jl_svecset(jl_typename_type->types, 5, jl_type_type);
-    jl_svecset(jl_typename_type->types, 10, jl_long_type);
-    jl_svecset(jl_typename_type->types, 11, jl_int32_type);
-    jl_svecset(jl_typename_type->types, 12, jl_uint8_type);
+    jl_svecset(jl_typename_type->types, 6, jl_type_type);
+    jl_svecset(jl_typename_type->types, 11, jl_long_type);
+    jl_svecset(jl_typename_type->types, 12, jl_int32_type);
     jl_svecset(jl_typename_type->types, 13, jl_uint8_type);
+    jl_svecset(jl_typename_type->types, 14, jl_uint8_type);
     jl_svecset(jl_methtable_type->types, 4, jl_long_type);
     jl_svecset(jl_methtable_type->types, 6, jl_module_type);
     jl_svecset(jl_methtable_type->types, 7, jl_array_any_type);
