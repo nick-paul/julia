@@ -526,7 +526,7 @@ julia> identity("Well, what did you expect?")
 identity(x) = x
 
 +(x) = x
--(x) = (-1)*x
+-(x) = Int8(-1)*x
 -(x, y) = x + (-y)
 *(x) = x
 (&)(x::Integer) = x
