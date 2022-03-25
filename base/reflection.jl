@@ -1276,16 +1276,14 @@ function code_typed_by_type(@nospecialize(tt::Type);
     return asts
 end
 
-function code_typed_opaque_closure(@nospecialize(closure::Core.OpaqueClosure);
-        optimize=true,
-        debuginfo::Symbol=:default,
-        interp = Core.Compiler.NativeInterpreter(closure.world))
+function code_typed_opaque_closure(@nospecialize(oc::Core.OpaqueClosure);
+    debuginfo::Symbol=:default, __...)
     ccall(:jl_is_in_pure_context, Bool, ()) && error("code reflection cannot be used from generated functions")
-    m = closure.source
+    m = oc.source
     if isa(m, Method)
         code = _uncompressed_ir(m, m.source)
         debuginfo === :none && remove_linenums!(code)
-        return Any[(code => code.rettype)]
+        return Any[(code => typeof(oc).parameters[2])]
     else
         error("encountered invalid Core.OpaqueClosure object")
     end
@@ -1295,6 +1293,9 @@ function return_types(@nospecialize(f), @nospecialize(types=default_tt(f));
                       world = get_world_counter(),
                       interp = Core.Compiler.NativeInterpreter(world))
     ccall(:jl_is_in_pure_context, Bool, ()) && error("code reflection cannot be used from generated functions")
+    if isa(f, Core.OpaqueClosure)
+        return Any[typeof(f).parameters[2]]
+    end
     types = to_tuple_type(types)
     rt = []
     for match in _methods(f, types, -1, world)::Vector
