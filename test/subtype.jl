@@ -1976,3 +1976,6 @@ end
 @testintersect(Tuple{Type{Pair{_A, S} where S<:AbstractArray{<:_A, 2}}, Dict} where _A,
                Tuple{Type{Pair{_A, S} where S<:AbstractArray{<:_A, 2}} where _A, Union{Array, Pair}},
                Bottom)
+
+@test_throws ArgumentError typeintersect(Vararg{Int}, Int)
+@test_throws ArgumentError typeintersect(Int, Vararg{Int})

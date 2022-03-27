@@ -680,7 +680,11 @@ issingletontype(@nospecialize(t)) = (@_pure_meta; isa(t, DataType) && isdefined(
 Compute a type that contains the intersection of `T` and `S`. Usually this will be the
 smallest such type or one close to it.
 """
-typeintersect(@nospecialize(a), @nospecialize(b)) = (@_pure_meta; ccall(:jl_type_intersection, Any, (Any, Any), a, b))
+function typeintersect(@nospecialize(a), @nospecialize(b))
+    @_pure_meta
+    (!isvarargtype(a) && !isvarargtype(b)) || throw(ArgumentError("invalid typeintersect with Vararg"))
+    return ccall(:jl_type_intersection, Any, (Any, Any), a, b)
+end
 
 morespecific(@nospecialize(a), @nospecialize(b)) = ccall(:jl_type_morespecific, Cint, (Any, Any), a, b) != 0
 
