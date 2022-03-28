@@ -21,6 +21,9 @@ JULIA_PRECOMPILE ?= 1
 # and LLVM_ASSERTIONS=1.
 FORCE_ASSERTIONS ?= 0
 
+# Set BOOTSTRAP_DEBUG_LEVEL to 1 to enable Julia-level stacktrace during bootstrapping.
+BOOTSTRAP_DEBUG_LEVEL ?= 0
+
 # OPENBLAS build options
 OPENBLAS_TARGET_ARCH:=
 OPENBLAS_SYMBOLSUFFIX:=
@@ -647,8 +650,8 @@ ifeq ($(OS),FreeBSD)
 ifneq (,$(findstring gfortran,$(FC)))
 
 # First let's figure out what version of GCC we're dealing with
-_GCCMAJOR := $(shell $(FC) -dumpversion | cut -d'.' -f1)
-_GCCMINOR := $(shell $(FC) -dumpversion | cut -d'.' -f2)
+_GCCMAJOR := $(shell $(FC) -dumpversion 2>/dev/null | cut -d'.' -f1)
+_GCCMINOR := $(shell $(FC) -dumpversion 2>/dev/null | cut -d'.' -f2)
 
 # The ports system uses major and minor for GCC < 5 (e.g. gcc49 for GCC 4.9), otherwise major only
 ifeq ($(_GCCMAJOR),4)
@@ -897,7 +900,7 @@ USE_BLAS64:=1
 BINARY:=64
 ifeq ($(OS),Darwin)
 # Apple Chips are all at least A12Z
-MCPU:=apple-a12
+MCPU:=apple-m1
 endif
 endif
 

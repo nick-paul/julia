@@ -78,11 +78,13 @@ function Effects(e::Effects = EFFECTS_UNKNOWN;
 end
 
 is_total_or_error(effects::Effects) =
-    effects.consistent === ALWAYS_TRUE && effects.effect_free === ALWAYS_TRUE &&
+    effects.consistent === ALWAYS_TRUE &&
+    effects.effect_free === ALWAYS_TRUE &&
     effects.terminates === ALWAYS_TRUE
 
 is_total(effects::Effects) =
-    is_total_or_error(effects) && effects.nothrow === ALWAYS_TRUE
+    is_total_or_error(effects) &&
+    effects.nothrow === ALWAYS_TRUE
 
 is_removable_if_unused(effects::Effects) =
     effects.effect_free === ALWAYS_TRUE &&
@@ -90,19 +92,19 @@ is_removable_if_unused(effects::Effects) =
     effects.nothrow === ALWAYS_TRUE
 
 function encode_effects(e::Effects)
-    return (e.consistent.state << 1) |
-           (e.effect_free.state << 3) |
-           (e.nothrow.state << 5) |
-           (e.terminates.state << 7) |
-           (e.overlayed)
+    return (e.consistent.state << 0) |
+           (e.effect_free.state << 2) |
+           (e.nothrow.state << 4) |
+           (e.terminates.state << 6) |
+           (UInt32(e.overlayed) << 8)
 end
-function decode_effects(e::UInt8)
+function decode_effects(e::UInt32)
     return Effects(
-        TriState((e >> 1) & 0x03),
-        TriState((e >> 3) & 0x03),
-        TriState((e >> 5) & 0x03),
-        TriState((e >> 7) & 0x03),
-        e & 0x01 ≠ 0x00,
+        TriState((e >> 0) & 0x03),
+        TriState((e >> 2) & 0x03),
+        TriState((e >> 4) & 0x03),
+        TriState((e >> 6) & 0x03),
+        _Bool(   (e >> 8) & 0x01),
         false)
 end
 
@@ -369,7 +371,7 @@ It also bails out from local statement/frame inference when any lattice element 
 but `AbstractInterpreter` doesn't provide a specific interface for configuring it.
 """
 bail_out_toplevel_call(::AbstractInterpreter, @nospecialize(callsig), sv#=::InferenceState=#) =
-    return isa(sv.linfo.def, Module) && !isdispatchtuple(callsig)
+    return sv.restrict_abstract_call_sites && !isdispatchtuple(callsig)
 bail_out_call(::AbstractInterpreter, @nospecialize(rt), sv#=::InferenceState=#) =
     return rt === Any
 bail_out_apply(::AbstractInterpreter, @nospecialize(rt), sv#=::InferenceState=#) =

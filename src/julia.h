@@ -394,21 +394,23 @@ typedef struct _jl_code_instance_t {
 
     // purity results
     union {
-        uint8_t ipo_purity_bits;
+        uint32_t ipo_purity_bits;
         struct {
             uint8_t ipo_consistent:2;
             uint8_t ipo_effect_free:2;
             uint8_t ipo_nothrow:2;
             uint8_t ipo_terminates:2;
+            uint8_t ipo_overlayed:1;
         } ipo_purity_flags;
     };
     union {
-        uint8_t purity_bits;
+        uint32_t purity_bits;
         struct {
             uint8_t consistent:2;
             uint8_t effect_free:2;
             uint8_t nothrow:2;
             uint8_t terminates:2;
+            uint8_t overlayed:1;
         } purity_flags;
     };
     jl_value_t *argescapes; // escape information of call arguments
@@ -1633,6 +1635,7 @@ JL_DLLEXPORT int jl_errno(void) JL_NOTSAFEPOINT;
 JL_DLLEXPORT void jl_set_errno(int e) JL_NOTSAFEPOINT;
 JL_DLLEXPORT int32_t jl_stat(const char *path, char *statbuf) JL_NOTSAFEPOINT;
 JL_DLLEXPORT int jl_cpu_threads(void) JL_NOTSAFEPOINT;
+JL_DLLEXPORT int jl_effective_threads(void) JL_NOTSAFEPOINT;
 JL_DLLEXPORT long jl_getpagesize(void) JL_NOTSAFEPOINT;
 JL_DLLEXPORT long jl_getallocationgranularity(void) JL_NOTSAFEPOINT;
 JL_DLLEXPORT int jl_is_debugbuild(void) JL_NOTSAFEPOINT;
@@ -1879,12 +1882,12 @@ typedef struct _jl_task_t {
     _Atomic(uint8_t) _state;
     uint8_t sticky; // record whether this Task can be migrated to a new thread
     _Atomic(uint8_t) _isexception; // set if `result` is an exception to throw or that we exited with
+    // multiqueue priority
+    uint16_t priority;
 
 // hidden state:
     // id of owning thread - does not need to be defined until the task runs
     _Atomic(int16_t) tid;
-    // multiqueue priority
-    int16_t prio;
     // saved gc stack top for context switches
     jl_gcframe_t *gcstack;
     size_t world_age;
