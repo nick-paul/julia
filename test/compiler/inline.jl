@@ -1089,7 +1089,7 @@ recur_termination22(x) = x * recur_termination21(x-1)
 end
 
 const ___CONST_DICT___ = Dict{Any,Any}(:a => 1, :b => 2)
-Base.@assume_effects :consistent :effect_free :terminates_globally consteval(
+Base.@assume_effects :total_or_throw consteval(
     f, args...; kwargs...) = f(args...; kwargs...)
 @test fully_eliminated() do
     consteval(getindex, ___CONST_DICT___, :a)
