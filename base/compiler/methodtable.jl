@@ -41,17 +41,17 @@ getindex(result::MethodLookupResult, idx::Int) = getindex(result.matches, idx)::
 
 """
     findall(sig::Type, view::MethodTableView; limit::Int=typemax(Int)) ->
-        (matches::MethodLookupResult, overlayed::Bool) or missing
+        (matches::MethodLookupResult, nooverlayed::Bool) or missing
 
 Find all methods in the given method table `view` that are applicable to the given signature `sig`.
 If no applicable methods are found, an empty result is returned.
 If the number of applicable methods exceeded the specified limit, `missing` is returned.
-`overlayed` indicates if any matching method is defined in an overlayed method table.
+`nooverlayed` indicates if any matching method isn't defined in an overlayed method table.
 """
 function findall(@nospecialize(sig::Type), table::InternalMethodTable; limit::Int=Int(typemax(Int32)))
     result = _findall(sig, nothing, table.world, limit)
     result === missing && return missing
-    return result, false
+    return result, true
 end
 
 function findall(@nospecialize(sig::Type), table::OverlayMethodTable; limit::Int=Int(typemax(Int32)))
@@ -60,7 +60,7 @@ function findall(@nospecialize(sig::Type), table::OverlayMethodTable; limit::Int
     nr = length(result)
     if nr ≥ 1 && result[nr].fully_covers
         # no need to fall back to the internal method table
-        return result, true
+        return result, false
     end
     # fall back to the internal method table
     fallback_result = _findall(sig, nothing, table.world, limit)
@@ -71,7 +71,7 @@ function findall(@nospecialize(sig::Type), table::OverlayMethodTable; limit::Int
         WorldRange(
             max(result.valid_worlds.min_world, fallback_result.valid_worlds.min_world),
             min(result.valid_worlds.max_world, fallback_result.valid_worlds.max_world)),
-        result.ambig | fallback_result.ambig), !isempty(result)
+        result.ambig | fallback_result.ambig), isempty(result)
 end
 
 function _findall(@nospecialize(sig::Type), mt::Union{Nothing,Core.MethodTable}, world::UInt, limit::Int)
@@ -87,7 +87,7 @@ end
 
 """
     findsup(sig::Type, view::MethodTableView) ->
-        (match::MethodMatch, valid_worlds::WorldRange, overlayed::Bool) or nothing
+        (match::MethodMatch, valid_worlds::WorldRange, nooverlayed::Bool) or nothing
 
 Find the (unique) method such that `sig <: match.method.sig`, while being more
 specific than any other method with the same property. In other words, find the method
@@ -101,15 +101,15 @@ It is possible that no method is an upper bound of `sig`, or
 it is possible that among the upper bounds, there is no least element.
 In both cases `nothing` is returned.
 
-`overlayed` indicates if the matching method is defined in an overlayed method table.
+`overlayed` indicates if the matching method isn't defined in an overlayed method table.
 """
 function findsup(@nospecialize(sig::Type), table::InternalMethodTable)
-    return (_findsup(sig, nothing, table.world)..., false)
+    return (_findsup(sig, nothing, table.world)..., true)
 end
 
 function findsup(@nospecialize(sig::Type), table::OverlayMethodTable)
     match, valid_worlds = _findsup(sig, table.mt, table.world)
-    match !== nothing && return match, valid_worlds, true
+    match !== nothing && return match, valid_worlds, false
     # fall back to the internal method table
     fallback_match, fallback_valid_worlds = _findsup(sig, nothing, table.world)
     return (
@@ -117,7 +117,7 @@ function findsup(@nospecialize(sig::Type), table::OverlayMethodTable)
         WorldRange(
             max(valid_worlds.min_world, fallback_valid_worlds.min_world),
             min(valid_worlds.max_world, fallback_valid_worlds.max_world)),
-        false)
+        true)
 end
 
 function _findsup(@nospecialize(sig::Type), mt::Union{Nothing,Core.MethodTable}, world::UInt)
@@ -129,6 +129,6 @@ function _findsup(@nospecialize(sig::Type), mt::Union{Nothing,Core.MethodTable},
     return match, valid_worlds
 end
 
-isoverlayed(::MethodTableView)     = error("unsatisfied MethodTableView interface")
-isoverlayed(::InternalMethodTable) = false
-isoverlayed(::OverlayMethodTable)  = true
+isnooverlayed(::MethodTableView)     = error("unsatisfied MethodTableView interface")
+isnooverlayed(::InternalMethodTable) = true
+isnooverlayed(::OverlayMethodTable)  = false
