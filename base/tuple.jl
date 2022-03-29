@@ -293,7 +293,7 @@ fill_to_length(t::Tuple{}, val, ::Val{2}) = (val, val)
 if nameof(@__MODULE__) === :Base
 
 function tuple_type_tail(T::Type)
-    @_total_or_throw_meta # TODO: this method is wrong (and not :tatal_or_throw)
+    @_total_or_throw_meta # TODO: this method is wrong (and not :total_or_throw)
     if isa(T, UnionAll)
         return UnionAll(T.var, tuple_type_tail(T.body))
     elseif isa(T, Union)
