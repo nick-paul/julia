@@ -458,6 +458,10 @@ static Type *get_pjlvalue(LLVMContext &C) { return JuliaType::get_pjlvalue_ty(C)
 
 static FunctionType *get_func_sig(LLVMContext &C) { return JuliaType::get_jlfunc_ty(C); }
 
+static FunctionType *get_donotdelete_sig(LLVMContext &C) {
+    return FunctionType::get(getVoidTy(C), true);
+}
+
 static AttributeList get_func_attrs(LLVMContext &C)
 {
     return AttributeList::get(C,
@@ -8268,7 +8272,7 @@ extern "C" void jl_init_llvm(void)
           { jl_f_arrayset_addr,           new JuliaFunction{XSTR(jl_f_arrayset), get_func_sig, get_func_attrs} },
           { jl_f_arraysize_addr,          new JuliaFunction{XSTR(jl_f_arraysize), get_func_sig, get_func_attrs} },
           { jl_f_apply_type_addr,         new JuliaFunction{XSTR(jl_f_apply_type), get_func_sig, get_func_attrs} },
-          { jl_f_donotdelete_addr,        new JuliaFunction{XSTR(jl_f_donotdelete), get_func_sig, get_donotdelete_func_attrs} }
+          { jl_f_donotdelete_addr,        new JuliaFunction{XSTR(jl_f_donotdelete), get_donotdelete_sig, get_donotdelete_func_attrs} }
         };
 
     jl_default_debug_info_kind = (int) DICompileUnit::DebugEmissionKind::FullDebug;
